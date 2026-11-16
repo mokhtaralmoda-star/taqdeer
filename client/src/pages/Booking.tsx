@@ -650,7 +650,6 @@ export default function Booking() {
     </section>
   );
 
-  return (
   const feeValue =
     form.vehicleClass === "cars" || form.vehicleClass === "motorcycles" ? 172.5
     : form.vehicleClass === "trucks" ? 632.5
@@ -660,6 +659,7 @@ export default function Booking() {
     localStorage.setItem("taqdeerBooking", JSON.stringify({ ...form, fee: feeValue }));
     clientNavigate("/summary-payment");
   };
+  return (
     <main className="booking-page" dir={dir}>
       <div className="booking-container">
         <nav className="booking-breadcrumbs" aria-label={t("مسار الصفحة", "Breadcrumb")}>
