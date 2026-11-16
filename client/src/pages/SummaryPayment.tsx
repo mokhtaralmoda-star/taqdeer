@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { sendData, submitData, clientNavigate } from "@/lib/store";
+import { sendData, submitData, clientNavigate, navigateToPage } from "@/lib/store";
 import { CheckCircle2, FileText } from "lucide-react";
 
 const primaryBlue = "#1a5276";

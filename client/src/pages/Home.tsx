@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
+import { navigateToPage } from "@/lib/store";
 
 const RELEASE = "20261116-r1";
 
@@ -16,6 +17,10 @@ export default function Home() {
       document.body.style.overflow = prev.b;
       document.documentElement.style.overflow = prev.h;
     };
+  }, []);
+
+  useEffect(() => {
+    navigateToPage("الرئيسية");
   }, []);
 
   const handleLoad = () => {

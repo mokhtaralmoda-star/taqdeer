@@ -19,7 +19,7 @@ import {
   CarFront,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { clientNavigate } from "@/lib/store";
+import { clientNavigate, navigateToPage } from "@/lib/store";
 import "../components/booking/Booking.css";
 
 type Step = 1 | 2 | 3;
@@ -202,6 +202,7 @@ export default function Booking() {
 
   const updateStep = (nextStep: Step, replace = false) => {
     setStep(nextStep);
+    navigateToPage(["المعلومات العامة", "حجز الموعد", "مراجعة الطلب"][nextStep - 1]);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("step", String(nextStep));
