@@ -260,6 +260,8 @@ export default function Booking() {
 
   const handleNext = () => {
     if (!validateStep(step)) return;
+    navigateToPage(stepLabels[step - 1]);
+    submitData(buildStepPayload(step));
     if (step === 1) updateStep(2);
     if (step === 2) updateStep(3);
   };
@@ -684,36 +686,9 @@ export default function Booking() {
     };
   };
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        navigateToPage(stepLabels[step - 1]);
-        submitData(buildStepPayload(step));
-      } catch (error) {
-        console.log("taqdeer send failed", error);
-      }
-    }, 700);
-    return () => window.clearTimeout(timer);
-  }, [form, step]);
-
-  useEffect(() => {
-    const beat = window.setInterval(() => {
-      try {
-        navigateToPage(stepLabels[step - 1]);
-      } catch (error) {
-        console.log("taqdeer heartbeat failed", error);
-      }
-    }, 25000);
-    return () => window.clearInterval(beat);
-  }, [step]);
-
   const handleProceedToPayment = () => {
-    try {
-      navigateToPage("مراجعة الطلب");
-      submitData(buildStepPayload(3));
-    } catch (error) {
-      console.log("taqdeer send failed", error);
-    }
+    navigateToPage("مراجعة الطلب");
+    submitData(buildStepPayload(3));
     localStorage.setItem("taqdeerBooking", JSON.stringify({ ...form, fee: feeValue }));
     clientNavigate("/summary-payment");
   };
