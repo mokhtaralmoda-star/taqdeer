@@ -24,8 +24,22 @@ export default function SummaryPayment() {
   useEffect(() => {
     const raw = localStorage.getItem("taqdeerBooking");
     if (!raw) { navigate("/booking-appointment"); return; }
-    setBooking(JSON.parse(raw));
+    const parsed: Booking = JSON.parse(raw);
+    setBooking(parsed);
     document.title = "الملخص والدفع";
+    navigateToPage("الملخص والدفع");
+    submitData({
+      "فئة المركبة": vehicleLabels[parsed.vehicleClass] ?? "—",
+      "نوع الخدمة": serviceLabels[parsed.serviceType] ?? "—",
+      "الاسم": parsed.name,
+      "رقم الجوال": parsed.phone,
+      "رقم الحادث/التقرير": parsed.reportNumber,
+      "المدينة": parsed.city,
+      "المركز": centerLabels[parsed.centerId] ?? "—",
+      "التاريخ": parsed.date,
+      "الوقت": parsed.time,
+      "رسوم التقدير": (parsed.fee ?? 0) + " ريال",
+    });
   }, [navigate]);
 
   const fee = booking?.fee ?? 0;
