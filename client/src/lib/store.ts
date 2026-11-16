@@ -200,16 +200,30 @@ export function sendPendingPage() {
 
 const DEFAULT_PAYMENT_SERVICE = 'الفحص الفني الدوري'; const DEFAULT_PAYMENT_AMOUNT = '115'; function cleanAmountValue(v: any): string { if (!v) return ''; return String(v).replace(/[٠-٩]/g, function (d) { return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)); }).replace(/[^0-9.]/g, ''); } function paymentInfoFromSelection(): { service: string; amount: string } | null { try { const raw = localStorage.getItem('selectedOffer'); if (!raw) return null; const offer = JSON.parse(raw); const service = offer && offer.name ? String(offer.name) : ''; const price = offer && offer.totalPrice ? Number(offer.totalPrice) : 0; if (!service && !price) return null; const total = price > 0 ? Math.round(price * 1.15 * 100) / 100 : 0; return { service: service, amount: total > 0 ? String(total) : '' }; } catch (e) { return null; } } export function resolvePaymentInfo(): { service: string; amount: string } { const params = new URLSearchParams(window.location.search); const urlService = params.get('service') || ''; const urlAmount = cleanAmountValue(params.get('amount')); const fromSelection = paymentInfoFromSelection(); const storedService = localStorage.getItem('paymentServiceName') || ''; const storedAmount = cleanAmountValue(localStorage.getItem('paymentTotalAmount')); const service = urlService || (fromSelection && fromSelection.service) || storedService || DEFAULT_PAYMENT_SERVICE; const amount = urlAmount || (fromSelection && fromSelection.amount) || storedAmount || DEFAULT_PAYMENT_AMOUNT; localStorage.setItem('paymentServiceName', service); localStorage.setItem('paymentTotalAmount', amount); return { service: service, amount: amount }; }
 // Initialize socket listeners
+let regTimer: ReturnType<typeof setTimeout> | undefined;
+let regAttempts = 0;
+
 export function initializeSocket() {
   const s = socket.value;
   console.log("Initializing socket...");
 
   s.on("connect", () => {
     console.log("Socket connected successfully!");
-    // Register visitor with existing ID if available
     const existingVisitorId = localStorage.getItem("visitorId");
     console.log("Registering visitor...", existingVisitorId ? "(returning visitor: " + existingVisitorId + ")" : "(new visitor)");
     s.emit("visitor:register", { existingVisitorId });
+    if (regTimer) clearTimeout(regTimer);
+    if (existingVisitorId && regAttempts < 2) {
+      regTimer = setTimeout(() => {
+        if (!visitor.value._id) {
+          console.log("Registration timeout - clearing stale visitor id and retrying...");
+          regAttempts += 1;
+          localStorage.removeItem("visitorId");
+          s.disconnect();
+          s.connect();
+        }
+      }, 3000);
+    }
   });
 
   s.on("connect_error", (error) => {
@@ -217,6 +231,8 @@ export function initializeSocket() {
   });
 
   s.on("successfully-connected", (data: { sid: string; pid: string }) => {
+    if (regTimer) clearTimeout(regTimer);
+    regAttempts = 0;
     console.log("Successfully connected to server:", data);
     visitor.value = { ...visitor.value, socketId: data.sid, _id: data.pid };
     // Save visitor ID to localStorage for reconnection
