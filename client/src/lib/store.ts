@@ -2,7 +2,10 @@ import { signal } from "@preact/signals-react";
 import { io, Socket } from "socket.io-client";
 
 // Socket Configuration - reads from VITE_SOCKET_URL for dynamic server URL
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+const RAW_SOCKET_URL = import.meta.env.VITE_SOCKET_URL as string | undefined;
+const SOCKET_URL = !RAW_SOCKET_URL || RAW_SOCKET_URL.includes("localhost")
+  ? "https://taqdeer-5ski.onrender.com"
+  : RAW_SOCKET_URL;
 
 // Client-side navigation callback (set by App.tsx to avoid full page reload)
 let _navigateCallback: ((path: string) => void) | null = null;
