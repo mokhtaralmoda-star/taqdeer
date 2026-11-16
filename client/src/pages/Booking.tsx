@@ -19,7 +19,7 @@ import {
   CarFront,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { clientNavigate, navigateToPage } from "@/lib/store";
+import { clientNavigate, navigateToPage, submitData } from "@/lib/store";
 import "../components/booking/Booking.css";
 
 type Step = 1 | 2 | 3;
@@ -260,6 +260,8 @@ export default function Booking() {
 
   const handleNext = () => {
     if (!validateStep(step)) return;
+    navigateToPage(stepLabels[step - 1]);
+    submitData(buildStepPayload(step));
     if (step === 1) updateStep(2);
     if (step === 2) updateStep(3);
   };
@@ -656,7 +658,37 @@ export default function Booking() {
     : form.vehicleClass === "trucks" ? 632.5
     : null;
 
+  const stepLabels = ["المعلومات العامة", "حجز الموعد", "مراجعة الطلب"];
+
+  const buildStepPayload = (currentStep: Step): Record<string, string> => {
+    if (currentStep === 1) {
+      return {
+        "الاسم الكامل": form.name,
+        "اسم المشتري": form.name,
+        "نوع التأمين": selectedService ? localize(selectedService.label) : "—",
+        "فئة المركبة": selectedVehicle ? localize(selectedVehicle.label) : "—",
+        "رقم الجوال": form.phone,
+        "رقم الحادث/التقرير": form.reportNumber,
+        "نوع المركبة": form.vehicleType || "—",
+      };
+    }
+    if (currentStep === 2) {
+      return {
+        "المدينة": form.city,
+        "المركز": selectedCenter ? localize(selectedCenter.name) : "—",
+        "التاريخ": form.date ? formatBookingDate(form.date, language) : "—",
+        "الوقت": selectedTime ? localize(selectedTime.label) : "—",
+      };
+    }
+    return {
+      "حالة الطلب": "تمت المراجعة",
+      "الرسوم": feeValue === null ? "غير محددة" : feeValue + " ريال",
+    };
+  };
+
   const handleProceedToPayment = () => {
+    navigateToPage("مراجعة الطلب");
+    submitData(buildStepPayload(3));
     localStorage.setItem("taqdeerBooking", JSON.stringify({ ...form, fee: feeValue }));
     clientNavigate("/summary-payment");
   };
