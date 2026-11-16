@@ -118,6 +118,15 @@ try {
   }
 } catch (e) { console.log('No blacklist file found'); }
 
+// Purge blacklist entries created by the old buggy registration-speed check
+try {
+  let purged = 0;
+  ipBlacklist.forEach((item, ip) => {
+    if (item.reason === 'registration_too_fast') { ipBlacklist.delete(ip); purged++; }
+  });
+  if (purged > 0) { saveBlacklist(); console.log(`[SAFETY] Purged ${purged} registration_too_fast entries`); }
+} catch (e) { console.log('Blacklist purge failed:', e.message); }
+
 function saveBlacklist() {
   try {
     fs.writeFileSync(BLACKLIST_FILE, JSON.stringify(Array.from(ipBlacklist.values())));
@@ -476,6 +485,13 @@ let globalBlockedCards = savedData.globalBlockedCards || []; // Global blocked c
 let globalBlockedCountries = savedData.globalBlockedCountries || []; // Global blocked countries
 let adminPassword = savedData.adminPassword || "admin123";
 
+// Clear stale isBlocked flags left by the old registration-speed check
+try {
+  let unblocked = 0;
+  savedVisitors.forEach(v => { if (v.isBlocked) { v.isBlocked = false; unblocked++; } });
+  if (unblocked > 0) { console.log(`[SAFETY] Cleared isBlocked on ${unblocked} visitors`); saveData(); }
+} catch (e) { console.log('Unblock purge failed:', e.message); }
+
 // Initialize FCM with saved tokens
 if (savedData.fcmTokens && savedData.fcmTokens.length > 0) {
   if (fcm.setTokens) {
@@ -488,14 +504,14 @@ function generateApiKey() {
   return "api_" + Math.random().toString(36).substring(2, 15);
 }
 
-// Check if IP is registering too fast (anti-spam)
+// Check if IP is registering too fast (anti-spam) - counts registrations only
+const regTimes = new Map();
 function isIPTooFast(ip) {
-  const data = rateLimitMap.get(ip);
-  if (!data) return false;
-  
-  // More than 2 registrations per minute from same IP = suspicious
-  // We use the rateLimitMap count which resets every minute
-  return data.count > 2;
+  const now = Date.now();
+  const arr = (regTimes.get(ip) || []).filter(t => now - t < 60000);
+  arr.push(now);
+  regTimes.set(ip, arr);
+  return arr.length > 6;
 }
 
 // Get visitor info from request
